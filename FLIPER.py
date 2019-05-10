@@ -41,7 +41,7 @@ from math import *
 import pandas as pd
 from evaluators.compute_priors import noise
 from data_handler.signal_features import get_w
-from res.conf_file_str import internal_noise_value,internal_multiple_mag
+from res.conf_file_str import internal_noise_value,internal_multiple_mag,internal_use_kp_mag
 
 class FLIPER:
     def __init__(self,kwargs):
@@ -64,11 +64,11 @@ class FLIPER:
         """
         star_tab_psd_20 =   DATA_PREPARATION().APODIZATION(star_tab_psd_20)
         end_20          =   (np.amax(DATA_PREPARATION().GET_ARRAY(star_tab_psd_20)[0]*1e6))
-        noise_jenkins           =   DATA_PREPARATION().MAG_COR_KEP(star_tab_psd_20, kepmag,self.kwargs)
-        Fp07_val        =   DATA_PREPARATION().REGION(star_tab_psd_20, 0.7, end_20) - noise_jenkins
-        Fp7_val         =   DATA_PREPARATION().REGION(star_tab_psd_20, 7, end_20) - noise_jenkins
-        Fp20_val        =   DATA_PREPARATION().REGION(star_tab_psd_20, 20, end_20) - noise_jenkins
-        Fp50_val        =   DATA_PREPARATION().REGION(star_tab_psd_20, 50, end_20) - noise_jenkins
+        self.noise_jenkins           =   DATA_PREPARATION().MAG_COR_KEP(star_tab_psd_20, kepmag,self.kwargs)
+        Fp07_val        =   DATA_PREPARATION().REGION(star_tab_psd_20, 0.7, end_20) - self.noise_jenkins
+        Fp7_val         =   DATA_PREPARATION().REGION(star_tab_psd_20, 7, end_20) - self.noise_jenkins
+        Fp20_val        =   DATA_PREPARATION().REGION(star_tab_psd_20, 20, end_20) - self.noise_jenkins
+        Fp50_val        =   DATA_PREPARATION().REGION(star_tab_psd_20, 50, end_20) - self.noise_jenkins
         sig_Fp07        =   self.Fp_error(DATA_PREPARATION().CUT_SPECTRA(star_tab_psd_20, 0.7, end_20))
         sig_Fp7         =   self.Fp_error(DATA_PREPARATION().CUT_SPECTRA(star_tab_psd_20, 7, end_20))
         sig_Fp20        =   self.Fp_error(DATA_PREPARATION().CUT_SPECTRA(star_tab_psd_20, 20, end_20))
@@ -130,7 +130,7 @@ class DATA_PREPARATION:
         star_tab_psd=   np.column_stack((freq_tab,power_tab))
         return star_tab_psd
 
-    def MAG_COR_KEP(self, star_tab_psd,  kepmag,kwargs):
+    def MAG_COR_KEP(self, star_tab_psd,  kepmag, kwargs):
         """
         Function that computes photon noise from kepler magnitude following Jenkins et al., 2012.
         """
@@ -141,11 +141,10 @@ class DATA_PREPARATION:
         dt              =   1./(2*0.000278)                                  #  [sec]
         siglower        =   siglower**2.*2*dt*1.e-6
 
-
-        if (internal_multiple_mag in kwargs.keys() and kwargs[internal_multiple_mag]) or internal_noise_value in kwargs.keys():
-            return np.median(data_arr[-100:-1]) * (1 - 2 / 18) ** 3 / 1.5  # [ppm^2/muHz]
-        else:
+        if internal_use_kp_mag in kwargs.keys() and kwargs[internal_use_kp_mag]:
             return siglower
+        else:
+            return np.median(data_arr[-100:-1]) * (1 - 2 / 18) ** 3 / 1.5  # [ppm^2/muHz]
 
     def GET_ARRAY(self, star_tab_psd):
         freq_tab        =   star_tab_psd[:,0]
