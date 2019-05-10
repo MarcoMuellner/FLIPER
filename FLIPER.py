@@ -36,12 +36,8 @@ A calling example is reported at the end of the code.
 from astropy.io import fits
 import numpy as np
 import _pickle as cPickle
-import os, os.path
-from math import *
 import pandas as pd
-from evaluators.compute_priors import noise
-from data_handler.signal_features import get_w
-from res.conf_file_str import internal_noise_value,internal_multiple_mag,internal_use_kp_mag
+from res.conf_file_str import internal_use_kp_mag
 
 class FLIPER:
     def __init__(self,kwargs):
